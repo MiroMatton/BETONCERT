@@ -3,6 +3,7 @@
 <p align="center">
 <img src="https://img.shields.io/badge/made%20by-MiroMatton-blue">
 <img src="https://img.shields.io/github/license/MiroMatton/BetonCert">
+<img src="https://img.shields.io/github/go-mod/go-version/MiroMatton/BetonCert/main/server">
 </p>
 
 # Beschrijving
