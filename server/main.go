@@ -1,30 +1,45 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"io/ioutil"
-	"net/http"
+	"log"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func main() {
 
-	url := "https://extranet.be-cert.be/api/HomePage/GetCertificateHoldersTree?languageIsoCode=en&treeFilters=%7B%22certificationType%22%3A%22*%22%7D"
+	// api producten ophalen
+	// url := "https://extranet.be-cert.be/api/HomePage/GetCertificateHoldersTree?languageIsoCode=en&treeFilters=%7B%22certificationType%22%3A%22*%22%7D"
+	// body := api(url)
+	// fmt.Println(body)
 
-	body := api(url)
+	config := GetConfig()
+	uri := fmt.Sprintf("mongodb+srv://%s:%s@alpha.mb8vfo3.mongodb.net/?retryWrites=true&w=majority", config.User, config.Password)
+	//fmt.Println(uri)
 
-	fmt.Println(body)
-
-}
-
-func api(url string) string {
-
-	req, _ := http.NewRequest("GET", url, nil)
-
-	res, _ := http.DefaultClient.Do(req)
-
-	defer res.Body.Close()
-	body, _ := ioutil.ReadAll(res.Body)
-
-	return string(body)
-
+	// connectie test
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	if err != nil {
+		log.Fatal(err)
+	}
+	ctx := context.Background()
+	err = client.Connect(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Disconnect(ctx)
+	catsCollection := client.Database("demo").Collection("cats")
+	cursor, err := catsCollection.Find(ctx, bson.M{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	var cats []bson.M
+	if err = cursor.All(ctx, &cats); err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(cats)
 }
