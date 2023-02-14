@@ -5,17 +5,11 @@ import (
 	"fmt"
 	"log"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func main() {
-
-	// api producten ophalen
-	// url := "https://extranet.be-cert.be/api/HomePage/GetCertificateHoldersTree?languageIsoCode=en&treeFilters=%7B%22certificationType%22%3A%22*%22%7D"
-	// body := api(url)
-	// fmt.Println(body)
 
 	config := GetConfig()
 	uri := fmt.Sprintf("mongodb+srv://%s:%s@alpha.mb8vfo3.mongodb.net/?retryWrites=true&w=majority", config.User, config.Password)
@@ -32,14 +26,25 @@ func main() {
 		log.Fatal(err)
 	}
 	defer client.Disconnect(ctx)
-	catsCollection := client.Database("demo").Collection("cats")
-	cursor, err := catsCollection.Find(ctx, bson.M{})
+
+	productsCollection := client.Database("demo").Collection("products")
+
+	url := "https://extranet.be-cert.be/api/HomePage/GetCertificateHoldersTree?languageIsoCode=en&treeFilters=%7B%22certificationType%22%3A%22*%22%7D"
+	product := api(url)
+
+	_, err = productsCollection.InsertOne(ctx, product)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
-	var cats []bson.M
-	if err = cursor.All(ctx, &cats); err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(cats)
+
+	// catsCollection := client.Database("demo").Collection("cats")
+	// cursor, err := catsCollection.Find(ctx, bson.M{})
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// var cats []bson.M
+	// if err = cursor.All(ctx, &cats); err != nil {
+	// 	log.Fatal(err)
+	// }
+	// fmt.Println(cats)
 }
