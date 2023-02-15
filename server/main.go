@@ -27,14 +27,19 @@ func main() {
 	}
 	defer client.Disconnect(ctx)
 
-	productsCollection := client.Database("demo").Collection("products")
-
 	url := "https://extranet.be-cert.be/api/HomePage/GetCertificateHoldersTree?languageIsoCode=en&treeFilters=%7B%22certificationType%22%3A%22*%22%7D"
-	product := api(url)
+	data := api(url)
 
-	_, err = productsCollection.InsertOne(ctx, product)
-	if err != nil {
-		panic(err)
+	productsCollection := client.Database("demo").Collection("companies")
+
+	for _, companyData := range data {
+		for _, company := range companyData.Company {
+			_, err = productsCollection.InsertOne(ctx, company)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Println("company: ", company, "was added")
+		}
 	}
 
 	// catsCollection := client.Database("demo").Collection("cats")

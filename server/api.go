@@ -6,24 +6,34 @@ import (
 	"net/http"
 )
 
-type Companies struct {
-	Id        int    `json:"Id"`
-	Name      string `json:"Name"`
-	Address   string `json:"Address"`
-	Zip       string `json:"Zip"`
-	City      string `json:"City"`
-	CountryId int    `json:"CountryId"`
-	Tel       string `json:"Tel"`
-	VAT       string `json:"VAT"`
+type Company struct {
+	Id                 int                `json:"Id"`
+	Name               string             `json:"Name"`
+	Address            string             `json:"Address"`
+	Zip                string             `json:"Zip"`
+	City               string             `json:"City"`
+	CountryId          int                `json:"CountryId"`
+	Tel                string             `json:"Tel"`
+	VAT                string             `json:"VAT"`
+	ProductionEntities []ProductionEntity `json:"ProductionEntities"`
 }
 
-type Product struct {
-	Id        int         `json:"Id"`
-	Name      string      `json:"Name"`
-	Companies []Companies `json:"Companies"`
+type ProductionEntity struct {
+	Id      int    `json:"Id"`
+	Name    string `json:"Name"`
+	Address string `json:"Address"`
+	Zip     string `json:"Zip"`
+	City    string `json:"City"`
+	Tel     string `json:"Tel"`
 }
 
-func api(url string) Product {
+type Data struct {
+	Id      int       `json:"Id"`
+	Name    string    `json:"Name"`
+	Company []Company `json:"Companies"`
+}
+
+func api(url string) []Data {
 
 	req, _ := http.NewRequest("GET", url, nil)
 
@@ -32,18 +42,16 @@ func api(url string) Product {
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)
 
-	var product []Product
+	var data []Data
 
-	err := json.Unmarshal(body, &product)
+	err := json.Unmarshal(body, &data)
 	if err != nil {
 		panic(err)
 	}
 
-	// for _, companyData := range product {
-	// 	fmt.Println("company NAME: ", companyData.Name)
-	// 	fmt.Println("company ID: ", companyData.Id)
+	// for _, companyData := range data {
+	// 	fmt.Println("companies: ", companyData.Company)
 	// }
 
-	return product[0]
-
+	return data
 }
