@@ -56,10 +56,6 @@ func api(url string) []Data {
 		panic(err)
 	}
 
-	// for _, companyData := range data {
-	// 	fmt.Println("companies: ", companyData.Company)
-	// }
-
 	return data
 }
 
@@ -70,19 +66,20 @@ type Entity struct {
 }
 
 type Certificate struct {
-	ID                       int     `bson:"ID"`
-	Product                  string  `bson:"Product"`
-	CertificateNumber        string  `bson:"CertificateNumber"`
-	Standard                 string  `bson:"Standard"`
-	TechnicalSpecification   *string `bson:"TechnicalSpecification"`
-	CertificateReport        int     `bson:"CertificateReport"`
-	SectorID                 int     `bson:"SectorId"`
-	StatusID                 int     `bson:"StatusId"`
-	NotLicensed              bool    `bson:"NotLicensed"`
-	NotLicensedMessage       *string `bson:"NotLicensedMessage"`
-	CertificationStatusID    int     `bson:"CertificationStatusId"`
-	CertificationNotLicensed bool    `bson:"CertificationNotLicensed"`
-	Suspended                bool    `bson:"Suspended"`
+	ID                       int     `json:"ID"`
+	Product                  string  `json:"Product"`
+	CertificateNumber        string  `json:"CertificateNumber"`
+	Standard                 string  `json:"Standard"`
+	TechnicalSpecification   *string `json:"TechnicalSpecification"`
+	CertificateReport        int     `json:"CertificateReport"`
+	SectorID                 int     `json:"SectorId"`
+	StatusID                 int     `json:"StatusId"`
+	NotLicensed              bool    `json:"NotLicensed"`
+	NotLicensedMessage       *string `json:"NotLicensedMessage"`
+	CertificationStatusID    int     `json:"CertificationStatusId"`
+	CertificationNotLicensed bool    `json:"CertificationNotLicensed"`
+	Suspended                bool    `json:"Suspended"`
+	CompanyId                int     `json:CompanyId`
 }
 
 func certApi(companyId int, categoryId int) []Entity {

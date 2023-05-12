@@ -54,6 +54,48 @@ func company(client *mongo.Client, ctx context.Context) {
 	}
 }
 
+func processProductionEntities(client *mongo.Client, ctx context.Context) {
+	// Get the companies collection from the "demo" database
+	companiesCollection := client.Database("demo").Collection("companiesTest")
+
+	// Get the certificates collection from the "demo" database
+	certificatesCollection := client.Database("demo").Collection("certificates")
+
+	// Find all documents in the collection
+	cursor, err := companiesCollection.Find(ctx, bson.M{})
+	if err != nil {
+		panic(err)
+	}
+	defer cursor.Close(ctx)
+
+	// Decode the documents into an array of Company structs
+	var companies []Company
+	if err = cursor.All(ctx, &companies); err != nil {
+		panic(err)
+	}
+
+	for _, company := range companies {
+
+		data := certApi(company.Id, company.CategoryId)
+
+		if data == nil || len(data) == 0 {
+			continue
+		}
+
+		for _, certificateCompany := range data {
+			for _, certificate := range certificateCompany.Certificate {
+				certificate.CompanyId = certificateCompany.Id
+
+				fmt.Println("Certificate:", company.Name, "was added")
+				_, err = certificatesCollection.InsertOne(ctx, certificate)
+				if err != nil {
+					panic(err)
+				}
+			}
+		}
+	}
+}
+
 func getCollection(client *mongo.Client, ctx context.Context) ([]bson.M, error) {
 	var results []bson.M
 
@@ -82,54 +124,4 @@ func getCollection(client *mongo.Client, ctx context.Context) ([]bson.M, error) 
 
 	// Return the results slice containing all the documents from the collection
 	return results, nil
-}
-
-func processProductionEntities(client *mongo.Client, ctx context.Context) {
-	// Get the companies collection from the "demo" database
-	companiesCollection := client.Database("demo").Collection("companiesTest")
-
-	// Get the certificates collection from the "demo" database
-	certificatesCollection := client.Database("demo").Collection("certificates")
-
-	// Find all documents in the collection
-	cursor, err := companiesCollection.Find(ctx, bson.M{})
-	if err != nil {
-		panic(err)
-	}
-	defer cursor.Close(ctx)
-
-	// Decode the documents into an array of Company structs
-	var companies []Company
-	if err = cursor.All(ctx, &companies); err != nil {
-		panic(err)
-	}
-
-	for _, company := range companies {
-		var certs []interface{}
-
-		data := certApi(company.Id, company.CategoryId)
-
-		if data == nil || len(data) == 0 {
-			continue
-		}
-
-		for _, doc := range data {
-			bsonData, err := bson.Marshal(doc)
-			if err != nil {
-				fmt.Println("skipping invalid certificate:", err)
-				continue
-			}
-			certs = append(certs, bsonData)
-		}
-
-		if certs == nil || len(certs) == 0 {
-			continue
-		}
-
-		res, err := certificatesCollection.InsertMany(ctx, certs)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println("Inserted", len(res.InsertedIDs), "certificates")
-	}
 }
