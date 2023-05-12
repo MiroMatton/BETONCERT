@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -28,9 +30,8 @@ func main() {
 	}
 	defer client.Disconnect(ctx)
 
-	// company(client, ctx)
-	processProductionEntities(client, ctx)
-	// getCollection(client, ctx)
+	fmt.Println("API running on : http://localhost:8080")
+	server(client, ctx)
 }
 
 func company(client *mongo.Client, ctx context.Context) {
@@ -96,32 +97,41 @@ func processProductionEntities(client *mongo.Client, ctx context.Context) {
 	}
 }
 
-func getCollection(client *mongo.Client, ctx context.Context) ([]bson.M, error) {
-	var results []bson.M
-
+func getCertificates(client *mongo.Client, ctx context.Context) ([]bson.M, error) {
 	// Access the "companiesTest" collection from the database
-	companiesTest := client.Database("your_database_name").Collection("companiesTest")
-
-	// Passing nil as the filter matches all documents in the collection
-	cursor, err := companiesTest.Find(ctx, nil)
+	catsCollection := client.Database("demo").Collection("certificates")
+	cursor, err := catsCollection.Find(ctx, bson.M{})
 	if err != nil {
+		log.Fatal(err)
+	}
+	var cats []bson.M
+	if err = cursor.All(ctx, &cats); err != nil {
 		return nil, err
 	}
-	defer cursor.Close(ctx)
+	return cats, nil
+}
 
-	// Loop through the cursor and append each document to the results slice
-	for cursor.Next(ctx) {
-		var result bson.M
-		if err := cursor.Decode(&result); err != nil {
-			return nil, err
+func server(client *mongo.Client, ctx context.Context) {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/api/certificates", func(w http.ResponseWriter, r *http.Request) {
+		// Get data from MongoDB
+		results, err := getCertificates(client, ctx)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
-		results = append(results, result)
-	}
 
-	if err := cursor.Err(); err != nil {
-		return nil, err
-	}
+		// Encode data as JSON and write to response
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+		if err := json.NewEncoder(w).Encode(results); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
 
-	// Return the results slice containing all the documents from the collection
-	return results, nil
+	log.Fatal(http.ListenAndServe(":8080", mux))
 }
