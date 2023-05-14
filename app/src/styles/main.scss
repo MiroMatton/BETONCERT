@@ -8,10 +8,67 @@
   margin: 1rem;
   padding: 1rem;
   display: flex;
-  flex: 1;
+  flex-direction: column;
   overflow-x: hidden;
   margin: 0 auto;
   background-color: $primary-color;
+}
+
+main {
+  display: flex;
+  flex: auto;
+  overflow-x: hidden;
+  margin: 0 auto;
+  background-color: $primary-color;
+  width: 100%;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 1rem;
+
+  img:first-child {
+    flex: 1 0 20%;
+  }
+
+  .searchContainer {
+    flex: 3 0 60%;
+    margin: 0 1rem;
+    background-color: $light-blue-color;
+    border-radius: 5px;
+
+    form {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+  }
+
+  input[type="text"] {
+    flex: 1;
+    margin: 0.5rem;
+    color: $white-color;
+    border: none;
+    outline: none;
+    background-color: inherit;
+  }
+
+  button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+
+    img[src$="/search.svg"] {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+    }
+  }
 }
 
 #filter-container {
@@ -64,7 +121,7 @@
 }
 
 @media screen and (max-width: 768px) {
-  :global(body) {
+  :global(main) {
     flex-direction: column;
   }
 

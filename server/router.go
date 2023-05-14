@@ -27,44 +27,64 @@ func corsMiddleware(next http.Handler) http.Handler {
 func server(client *mongo.Client, ctx context.Context) {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/api/certificates", getCertificatesHandler(client, ctx)).Methods("GET")
-	r.HandleFunc("/api/certificates/{id:[0-9]+}", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/api/certificates", certificatesHandler(client, ctx)).Methods("GET")
+	r.HandleFunc("/api/favourite/{id:[0-9]+}", func(w http.ResponseWriter, r *http.Request) {
 		toggleFavouriteHandler(w, r, client)
 	}).Methods("PUT")
 
 	log.Fatal(http.ListenAndServe(":8080", corsMiddleware(r)))
 }
 
-func getCertificatesHandler(client *mongo.Client, ctx context.Context) func(http.ResponseWriter, *http.Request) {
+func certificatesHandler(client *mongo.Client, ctx context.Context) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Extract page and perPage parameters from query string
+		// Extract query and page parameters from query string
+		query := r.URL.Query().Get("q")
 		pageStr := r.URL.Query().Get("page")
-		favourites, _ := getUserFavorites(client, ctx, "645ff9c78f9b2d306a6d52ff")
+		fmt.Println(query)
+		fmt.Println(pageStr)
 
-		// Convert parameters to integers (default to 1 and 25 if not provided)
+		// Convert page parameter to integer (default to 1 if not provided)
 		page, _ := strconv.Atoi(pageStr)
 		if page < 1 {
 			page = 1
 		}
 
-		// Get data from MongoDB
-		results, err := getCertificates(client, ctx, page, favourites)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		// Get user favorites from MongoDB
+		favourites, _ := getUserFavorites(client, ctx, "645ff9c78f9b2d306a6d52ff")
 
-		// Encode data as JSON and write to response
-		if err := json.NewEncoder(w).Encode(results); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+		// Check whether there is a query parameter or not
+		if len(query) > 0 {
+			fmt.Println(query)
+			// If there is a query parameter, retrieve data based on the query
+			results, err := getCertificatesByProduct(client, ctx, page, favourites, query)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			// Encode data as JSON and write to response
+			if err := json.NewEncoder(w).Encode(results); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		} else {
+			// If there is no query parameter, retrieve all data
+			results, err := getCertificates(client, ctx, page, favourites)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			// Encode data as JSON and write to response
+			if err := json.NewEncoder(w).Encode(results); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 	}
 }
 
 func toggleFavouriteHandler(w http.ResponseWriter, r *http.Request, client *mongo.Client) {
 	// Extract certificate ID from URL path
-	id, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/api/certificates/"))
+	id, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/api/favourite/"))
 	if err != nil {
 		http.Error(w, "Invalid certificate ID", http.StatusBadRequest)
 		return
