@@ -2,10 +2,8 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -97,41 +95,39 @@ func processProductionEntities(client *mongo.Client, ctx context.Context) {
 	}
 }
 
-func getCertificates(client *mongo.Client, ctx context.Context) ([]bson.M, error) {
-	// Access the "companiesTest" collection from the database
-	catsCollection := client.Database("demo").Collection("certificates")
-	cursor, err := catsCollection.Find(ctx, bson.M{})
-	if err != nil {
-		log.Fatal(err)
+func getCertificates(client *mongo.Client, ctx context.Context, page int, favouriteIDs []int) ([]Certificate, error) {
+    // Access the "certificates" collection from the database
+    certCollection := client.Database("demo").Collection("certificates")
+    
+    // Calculate the number of documents to skip based on the page number
+    perPage := 25
+    skip := (page - 1) * perPage
+
+    // Set up the options for the MongoDB query
+    opts := options.Find().SetSkip(int64(skip)).SetLimit(int64(perPage))
+
+    // Execute the query and retrieve the result set
+    cursor, err := certCollection.Find(ctx, bson.M{}, opts)
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    // Convert the result set to a slice of bson.M
+    var certs []Certificate
+    if err = cursor.All(ctx, &certs); err != nil {
+        return nil, err
+    }
+
+    // Check if each certificate is in the favourite list and set the isFavourite field
+    for i, cert := range certs {
+		for _, favID := range favouriteIDs {
+			if cert.ID == favID {
+				certs[i].IsFavourite = true
+				break
+			}
+		}
 	}
-	var cats []bson.M
-	if err = cursor.All(ctx, &cats); err != nil {
-		return nil, err
-	}
-	return cats, nil
+
+    return certs, nil
 }
 
-func server(client *mongo.Client, ctx context.Context) {
-	mux := http.NewServeMux()
-
-	mux.HandleFunc("/api/certificates", func(w http.ResponseWriter, r *http.Request) {
-		// Get data from MongoDB
-		results, err := getCertificates(client, ctx)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		// Encode data as JSON and write to response
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
-		if err := json.NewEncoder(w).Encode(results); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
-
-	log.Fatal(http.ListenAndServe(":8080", mux))
-}
