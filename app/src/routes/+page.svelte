@@ -3,31 +3,42 @@
   import CertificateItem from "$lib/CertificateItem.svelte";
   interface Certificate {
     _id: string;
-    certificatenumber: string;
-    certificatereport: number;
-    certificationnotlicensed: boolean;
-    certificationstatusid: number;
-    companyid: number;
+    certificateNumber: string;
+    certificateReport: number;
+    certificationNotLicensed: boolean;
+    certificationStatusID: number;
+    companyId: number;
     id: number;
-    notlicensed: boolean;
-    notlicensedmessage: null | string;
+    notLicensed: boolean;
+    notLicensedMessage: string | null;
     product: string;
-    sectorid: number;
+    sectorId: number;
     standard: string;
-    statusid: number;
+    statusID: number;
     suspended: boolean;
-    technicalspecification: null | string;
+    technicalSpecification: string | null;
+    isFavourite?: boolean;
   }
 
-  let data: Certificate[] = [];
+  let certificates: Certificate[] = [];
   let currentPage = 1;
+  let perPage = 25;
   let searchQuery = "";
+  let totalPages: number;
 
   function fetchData() {
-    fetch(`http://localhost:8080/api/certificates?page=${currentPage}`)
+    const url = new URL(`http://localhost:8080/api/certificates`);
+    url.searchParams.set("page", String(currentPage));
+    url.searchParams.set("perPage", String(perPage));
+    if (searchQuery.trim()) {
+      url.searchParams.set("q", searchQuery);
+    }
+
+    fetch(url.toString())
       .then((response) => response.json())
-      .then((json: Certificate[]) => {
-        data = json;
+      .then((json: { Certificates: Certificate[]; TotalPages: number }) => {
+        certificates = json.Certificates;
+        totalPages = json.TotalPages;
       });
   }
 
@@ -45,13 +56,8 @@
       return;
     }
 
-    fetch(
-      `http://localhost:8080/api/certificates?page=${currentPage}&q=${searchQuery}`
-    )
-      .then((response) => response.json())
-      .then((json: Certificate[]) => {
-        data = json;
-      });
+    currentPage = 1;
+    fetchData();
   }
 
   export function initSearchForm(submitHandler: (event: Event) => void): void {
@@ -142,14 +148,18 @@
         on:click={() => goToPage(currentPage - 1)}>Prev</button
       >
       <button
-        disabled={currentPage === 86}
+        disabled={currentPage === totalPages}
         on:click={() => goToPage(currentPage + 1)}>Next</button
       >
       <span>{currentPage}</span>
     </div>
-    {#each data as certificate}
-      <CertificateItem {certificate} />
-    {/each}
+    {#if certificates && certificates.length > 0}
+      {#each certificates as certificate}
+        <CertificateItem {certificate} />
+      {/each}
+    {:else}
+      <p>No certificates found.</p>
+    {/if}
   </div>
 </main>
 

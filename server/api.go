@@ -80,7 +80,7 @@ type Certificate struct {
 	CertificationNotLicensed bool    `json:"CertificationNotLicensed"`
 	Suspended                bool    `json:"Suspended"`
 	CompanyId                int     `json:CompanyId`
-	IsFavourite bool `json:"IsFavourite"`
+	IsFavourite              bool    `json:"IsFavourite"`
 }
 
 func certApi(companyId int, categoryId int) []Entity {

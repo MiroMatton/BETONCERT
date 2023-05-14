@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -96,7 +97,7 @@ func processProductionEntities(client *mongo.Client, ctx context.Context) {
 	}
 }
 
-func getCertificates(client *mongo.Client, ctx context.Context, page int, favouriteIDs []int) ([]Certificate, error) {
+func getCertificates(client *mongo.Client, ctx context.Context, page int, favouriteIDs []int, query string) ([]Certificate, int, error) {
 	// Access the "certificates" collection from the database
 	certCollection := client.Database("demo").Collection("certificates")
 
@@ -104,45 +105,12 @@ func getCertificates(client *mongo.Client, ctx context.Context, page int, favour
 	perPage := 25
 	skip := (page - 1) * perPage
 
-	// Set up the options for the MongoDB query
+	// Set up the options for the MongoDB query and filter by product if a query is provided
 	opts := options.Find().SetSkip(int64(skip)).SetLimit(int64(perPage))
-
-	// Execute the query and retrieve the result set
-	cursor, err := certCollection.Find(ctx, bson.M{}, opts)
-	if err != nil {
-		log.Fatal(err)
+	var filter bson.M
+	if len(query) > 0 {
+		filter = bson.M{"product": primitive.Regex{Pattern: query, Options: "i"}}
 	}
-
-	// Convert the result set to a slice of bson.M
-	var certs []Certificate
-	if err = cursor.All(ctx, &certs); err != nil {
-		return nil, err
-	}
-
-	// Check if each certificate is in the favourite list and set the isFavourite field
-	for i, cert := range certs {
-		for _, favID := range favouriteIDs {
-			if cert.ID == favID {
-				certs[i].IsFavourite = true
-				break
-			}
-		}
-	}
-
-	return certs, nil
-}
-
-func getCertificatesByProduct(client *mongo.Client, ctx context.Context, page int, favouriteIDs []int, query string) ([]Certificate, error) {
-	// Access the "certificates" collection from the database
-	certCollection := client.Database("demo").Collection("certificates")
-
-	// Calculate the number of documents to skip based on the page number
-	perPage := 25
-	skip := (page - 1) * perPage
-
-	// Set up the options for the MongoDB query, filter by product and search for the query string
-	opts := options.Find().SetSkip(int64(skip)).SetLimit(int64(perPage))
-	filter := bson.M{"product": primitive.Regex{Pattern: query, Options: "i"}}
 
 	// Execute the query and retrieve the result set
 	cursor, err := certCollection.Find(ctx, filter, opts)
@@ -150,10 +118,10 @@ func getCertificatesByProduct(client *mongo.Client, ctx context.Context, page in
 		log.Fatal(err)
 	}
 
-	// Convert the result set to a slice of bson.M
+	// Convert the result set to a slice of Certificate
 	var certs []Certificate
 	if err = cursor.All(ctx, &certs); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	// Check if each certificate is in the favourite list and set the isFavourite field
@@ -166,5 +134,14 @@ func getCertificatesByProduct(client *mongo.Client, ctx context.Context, page in
 		}
 	}
 
-	return certs, nil
+	// Calculate the total count of documents matching the query
+	totalCount, err := certCollection.CountDocuments(ctx, filter)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Calculate total number of pages based on the total count and documents per page
+	totalPages := int(math.Ceil(float64(totalCount) / float64(perPage)))
+
+	return certs, totalPages, nil
 }

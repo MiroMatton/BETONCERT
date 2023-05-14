@@ -37,47 +37,54 @@ func server(client *mongo.Client, ctx context.Context) {
 
 func certificatesHandler(client *mongo.Client, ctx context.Context) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Extract query and page parameters from query string
+		// Extract query parameter from query string
 		query := r.URL.Query().Get("q")
-		pageStr := r.URL.Query().Get("page")
-		fmt.Println(query)
-		fmt.Println(pageStr)
 
-		// Convert page parameter to integer (default to 1 if not provided)
-		page, _ := strconv.Atoi(pageStr)
-		if page < 1 {
-			page = 1
+		// Set default values for pagination parameters
+		page := 1
+		perPage := 25
+
+		// Parse page and per_page parameters from query string
+		if pageStr := r.URL.Query().Get("page"); pageStr != "" {
+			var err error
+			page, err = strconv.Atoi(pageStr)
+			if err != nil || page < 1 {
+				http.Error(w, "Invalid page number", http.StatusBadRequest)
+				return
+			}
+		}
+
+		if perPageStr := r.URL.Query().Get("per_page"); perPageStr != "" {
+			var err error
+			perPage, err = strconv.Atoi(perPageStr)
+			if err != nil || perPage <= 0 {
+				http.Error(w, "Invalid per_page number", http.StatusBadRequest)
+				return
+			}
 		}
 
 		// Get user favorites from MongoDB
 		favourites, _ := getUserFavorites(client, ctx, "645ff9c78f9b2d306a6d52ff")
 
-		// Check whether there is a query parameter or not
-		if len(query) > 0 {
-			fmt.Println(query)
-			// If there is a query parameter, retrieve data based on the query
-			results, err := getCertificatesByProduct(client, ctx, page, favourites, query)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			// Encode data as JSON and write to response
-			if err := json.NewEncoder(w).Encode(results); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		} else {
-			// If there is no query parameter, retrieve all data
-			results, err := getCertificates(client, ctx, page, favourites)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			// Encode data as JSON and write to response
-			if err := json.NewEncoder(w).Encode(results); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
+		// Retrieve data based on the query (if provided) or retrieve all data
+		results, totalPages, err := getCertificates(client, ctx, page, favourites, query)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Encode data as JSON and write to response
+		response := struct {
+			Certificates []Certificate `json:"Certificates"`
+			TotalPages   int           `json:"TotalPages"`
+		}{
+			Certificates: results,
+			TotalPages:   totalPages,
+		}
+
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 	}
 }
