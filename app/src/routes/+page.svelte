@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import CertificateItem from "/src/lib/CertificateItem.svelte";
+  import { onMount } from "svelte";
+  import CertificateItem from "$lib/CertificateItem.svelte";
   interface Certificate {
     _id: string;
     certificatenumber: string;
@@ -23,14 +23,14 @@
   let currentPage = 1;
 
   function fetchData() {
-  fetch(`http://localhost:8080/api/certificates?page=${currentPage}`)
-    .then((response) => response.json())
-    .then((json: Certificate[]) => {
-      data = json;
-    });
+    fetch(`http://localhost:8080/api/certificates?page=${currentPage}`)
+      .then((response) => response.json())
+      .then((json: Certificate[]) => {
+        data = json;
+      });
   }
 
-    function goToPage(page: number) {
+  function goToPage(page: number) {
     currentPage = page;
     fetchData();
   }
@@ -84,12 +84,18 @@
     <span class="tab">Favorites</span>
   </div>
   <div>
-    <button disabled={currentPage === 1} on:click={() => goToPage(currentPage - 1)}>Prev</button>
-    <button disabled={currentPage === 86} on:click={() => goToPage(currentPage + 1)}>Next</button>
+    <button
+      disabled={currentPage === 1}
+      on:click={() => goToPage(currentPage - 1)}>Prev</button
+    >
+    <button
+      disabled={currentPage === 86}
+      on:click={() => goToPage(currentPage + 1)}>Next</button
+    >
     <span>{currentPage}</span>
   </div>
   {#each data as certificate}
-    <CertificateItem certificate={certificate} />
+    <CertificateItem {certificate} />
   {/each}
 </div>
 
