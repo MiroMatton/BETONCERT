@@ -1,114 +1,103 @@
 @import "./_variables.scss";
 :global(*) {
-    box-sizing: border-box;
-    font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+:global(body) {
+  margin: 1rem;
+  padding: 1rem;
+  display: flex;
+  flex: 1;
+  overflow-x: hidden;
+  margin: 0 auto;
+  background-color: $primary-color;
+}
+
+#filter-container {
+  width: 300px;
+  background-color: $light-grey-color;
+  padding: 10px;
+  border-radius: 32px 0 0 32px;
+  padding: 0 2rem;
+
+  h3 {
+    font-size: 2rem;
   }
-  
+}
+
+#certificate-container {
+  flex: 1;
+  padding: 10px;
+  background-color: $white-color;
+  border-radius: 0 32px 32px 0;
+}
+
+#certificate-container > div {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(238, 238, 238, 0.9);
+  margin-bottom: 10px;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid black;
+  padding-bottom: 10px;
+  font-size: 1.5rem;
+  padding: 1rem;
+}
+
+.tab {
+  font-weight: bold;
+  cursor: pointer;
+  margin-right: 1rem;
+}
+
+.tab:hover {
+  color: $primary-color;
+  text-decoration: underline;
+}
+
+#toggle-filters {
+  display: none;
+}
+
+@media screen and (max-width: 768px) {
   :global(body) {
-    margin: 1rem;
-    padding: 1rem;
-    display: flex;
-    flex: 1;
-    overflow-x: hidden;
-    margin: 0 auto;
-    background-color: $primary-color;
+    flex-direction: column;
   }
 
   #filter-container {
-    width: 300px;
-    background-color: $light-grey-color;
-    padding: 10px;
-    border-radius: 32px 0 0 32px;
-    padding: 0 2rem;
-
-    h3 {
-        font-size: 2rem;
-    }
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-radius: 32px 32px 0 0;
   }
 
   #certificate-container {
-    flex: 1;
-    padding: 10px;
-    background-color: $white-color;
-    border-radius: 0 32px 32px 0;
-  }
-
-  #certificate-container > div {
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid rgba(238, 238, 238, 0.9);
-    margin-bottom: 10px;
-
-    svg, img {
-        margin: 0 0.5rem;
-    }
-
-    .uncertified {
-        color: $orange-color;
-    }
-    .certified {
-        color: $green-color;
-    }
-  }
-
-  .tabs {
-    display: flex;
-    border-bottom: 1px solid black;
-    padding-bottom: 10px;
-    font-size: 1.5rem;
-    padding:1rem
-  }
-
-  .tab {
-    font-weight: bold;
-    cursor: pointer;
-    margin-right: 1rem;
-  }
-
-  .tab:hover {
-    color: $primary-color;
-    text-decoration: underline;
+    width: 100%;
+    padding-top: 10px;
+    border-radius: 0 0 32px 32px;
   }
 
   #toggle-filters {
-    display: none;
+    display: block;
+    margin-bottom: 10px;
+    text-align: center;
+    cursor: pointer;
   }
 
-  @media screen and (max-width: 768px) {
-    :global(body) {
-      flex-direction: column;
-    }
-
-    #filter-container {
-      width: 100%;
-      height: auto;
-      border-right: none;
-      border-radius: 32px 32px 0 0;
-    }
-
-    #certificate-container {
-      width: 100%;
-      padding-top: 10px;
-      border-radius: 0 0 32px 32px;
-    }
-
-    #toggle-filters {
-      display: block;
-      margin-bottom: 10px;
-      text-align: center;
-      cursor: pointer;
-    }
-
-    #filter-container.collapsed {
-      height: 0;
-      overflow: hidden;
-    }
-
-    #toggle-filters:before {
-      content: "+ Toggle Filters";
-    }
-
-    #filter-container.collapsed #toggle-filters:before {
-      content: "- Toggle Filters";
-    }
+  #filter-container.collapsed {
+    height: 0;
+    overflow: hidden;
   }
+
+  #toggle-filters:before {
+    content: "+ Toggle Filters";
+  }
+
+  #filter-container.collapsed #toggle-filters:before {
+    content: "- Toggle Filters";
+  }
+}
