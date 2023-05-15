@@ -145,3 +145,47 @@ func getCertificates(client *mongo.Client, ctx context.Context, page int, favour
 
 	return certs, totalPages, nil
 }
+
+func getUserFavoriteCertificates(client *mongo.Client, ctx context.Context, page int, perPage int, query string, favourites []int) ([]Certificate, int, error) {
+	// Access the "certificates" collection from the database
+	certCollection := client.Database("demo").Collection("certificates")
+
+	// Calculate the number of documents to skip based on the page number
+	skip := (page - 1) * perPage
+
+	// Set up the options for the MongoDB query and filter by product if a query is provided
+	opts := options.Find().SetSkip(int64(skip)).SetLimit(int64(perPage))
+	var filter bson.M
+	if len(query) > 0 {
+		filter = bson.M{"product": primitive.Regex{Pattern: query, Options: "i"}}
+	}
+
+	// Find all certificates with IDs in the "favourites" array
+	cursor, err := certCollection.Find(ctx, bson.M{"id": bson.M{"$in": favourites}}, opts)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer cursor.Close(ctx)
+
+	// Convert the result set to a slice of Certificate and set the IsFavourite field to true for each one
+	var certs []Certificate
+	for cursor.Next(ctx) {
+		var cert Certificate
+		if err = cursor.Decode(&cert); err != nil {
+			return nil, 0, err
+		}
+		cert.IsFavourite = true
+		certs = append(certs, cert)
+	}
+
+	// Calculate the total count of documents matching the query
+	totalCount, err := certCollection.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Calculate total number of pages based on the total count and documents per page
+	totalPages := int(math.Ceil(float64(totalCount) / float64(perPage)))
+
+	return certs, totalPages, nil
+}

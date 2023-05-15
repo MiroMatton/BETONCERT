@@ -25,21 +25,32 @@
   let perPage = 25;
   let searchQuery = "";
   let totalPages: number;
+  let activeTab = "all";
 
-  function fetchData() {
+  async function fetchData() {
     const url = new URL(`http://localhost:8080/api/certificates`);
+
+    url.searchParams.set("mode", String(activeTab));
     url.searchParams.set("page", String(currentPage));
     url.searchParams.set("perPage", String(perPage));
+
     if (searchQuery.trim()) {
       url.searchParams.set("q", searchQuery);
     }
 
-    fetch(url.toString())
-      .then((response) => response.json())
-      .then((json: { Certificates: Certificate[]; TotalPages: number }) => {
-        certificates = json.Certificates;
-        totalPages = json.TotalPages;
-      });
+    try {
+      const response = await fetch(url.toString());
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const json = await response.json();
+      certificates = json.Certificates;
+      totalPages = json.TotalPages;
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   function goToPage(page: number) {
@@ -139,8 +150,24 @@
 
   <div id="certificate-container">
     <div class="tabs">
-      <span class="tab active">All Certificates</span>
-      <span class="tab">Favorites</span>
+      <span
+        class="tab"
+        class:selected={activeTab === "all"}
+        class:active={activeTab === "all" ? "active-tab" : ""}
+        on:click={() => {
+          activeTab = "all";
+          fetchData();
+        }}>All Certificates</span
+      >
+      <span
+        class="tab"
+        class:selected={activeTab === "favorites"}
+        class:active={activeTab === "favorites" ? "active-tab" : ""}
+        on:click={() => {
+          activeTab = "favorites";
+          fetchData();
+        }}>Favorites</span
+      >
     </div>
     <div>
       <button
@@ -153,13 +180,15 @@
       >
       <span>{currentPage}</span>
     </div>
-    {#if certificates && certificates.length > 0}
-      {#each certificates as certificate}
-        <CertificateItem {certificate} />
-      {/each}
-    {:else}
-      <p>No certificates found.</p>
-    {/if}
+    <div class="certificate-list">
+      {#if certificates && certificates.length > 0}
+        {#each certificates as certificate}
+          <CertificateItem {certificate} />
+        {/each}
+      {:else}
+        <p>No certificates found.</p>
+      {/if}
+    </div>
   </div>
 </main>
 
