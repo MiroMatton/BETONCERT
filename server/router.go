@@ -71,14 +71,8 @@ func certificatesHandler(client *mongo.Client, ctx context.Context) func(http.Re
 		var err error
 
 		// Check the value of the mode parameter and retrieve data accordingly
-		switch mode := r.URL.Query().Get("mode"); mode {
-		case "favorites":
-			// Retrieve user favorite certificates based on the query (if provided) or retrieve all user favorite certificates
-			results, totalPages, err = getUserFavoriteCertificates(client, ctx, page, perPage, query, favourites)
-		default:
-			// Retrieve all certificates based on the query (if provided) or retrieve all certificates
-			results, totalPages, err = getCertificates(client, ctx, page, favourites, query)
-		}
+		var mode string = r.URL.Query().Get("mode")
+		results, totalPages, err = getCertificates(client, ctx, page, perPage, query, favourites, mode)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

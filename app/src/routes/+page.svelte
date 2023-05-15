@@ -156,6 +156,7 @@
         class:active={activeTab === "all" ? "active-tab" : ""}
         on:click={() => {
           activeTab = "all";
+          currentPage = 1;
           fetchData();
         }}>All Certificates</span
       >
@@ -165,6 +166,7 @@
         class:active={activeTab === "favorites" ? "active-tab" : ""}
         on:click={() => {
           activeTab = "favorites";
+          currentPage = 1;
           fetchData();
         }}>Favorites</span
       >
