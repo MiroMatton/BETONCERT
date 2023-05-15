@@ -171,16 +171,18 @@
         }}>Favorites</span
       >
     </div>
-    <div>
+    <div class="page-navigation">
       <button
         disabled={currentPage === 1}
-        on:click={() => goToPage(currentPage - 1)}>Prev</button
-      >
+        on:click={() => goToPage(currentPage - 1)}
+        ><img src="/src/assets/arrowLeft.svg" alt="voorige pagina " />
+      </button>
+      <span>{currentPage}</span>
       <button
         disabled={currentPage === totalPages}
-        on:click={() => goToPage(currentPage + 1)}>Next</button
+        on:click={() => goToPage(currentPage + 1)}
+        ><img src="/src/assets/arrowRight.svg" alt="volgende pagina" /></button
       >
-      <span>{currentPage}</span>
     </div>
     <div class="certificate-list">
       {#if certificates && certificates.length > 0}
