@@ -192,3 +192,22 @@ func getUserFavorites(client *mongo.Client, ctx context.Context, id string) ([]i
 
 	return result.FavoriteCertificates, nil
 }
+
+func getCompanyByID(client *mongo.Client, ctx context.Context, id int) (*Company, error) {
+	collection := client.Database("demo").Collection("companiesTest")
+
+	filter := bson.M{"productionentities.id": id}
+
+	result := collection.FindOne(ctx, filter)
+	if result.Err() != nil {
+		return nil, result.Err()
+	}
+
+	var company Company
+	err := result.Decode(&company)
+	if err != nil {
+		return nil, err
+	}
+
+	return &company, nil
+}

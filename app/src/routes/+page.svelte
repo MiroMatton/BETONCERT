@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import CertificateItem from "$lib/CertificateItem.svelte";
+  import Modal from "$lib/modal.svelte";
   interface Certificate {
     _id: string;
     certificateNumber: string;
@@ -20,6 +21,28 @@
     isFavourite?: boolean;
   }
 
+  interface Company {
+    Id: number;
+    Name: string;
+    Address: string;
+    Zip: string;
+    City: string;
+    CountryId: number;
+    Tel: string;
+    VAT: string;
+    categoryId: number;
+    ProductionEntities: ProductionEntity[];
+  }
+
+  interface ProductionEntity {
+    Id: number;
+    Name: string;
+    Address: string;
+    Zip: string;
+    City: string;
+    Tel: string;
+  }
+
   let certificates: Certificate[] = [];
   let currentPage = 1;
   let perPage = 25;
@@ -27,6 +50,12 @@
   let totalPages: number;
   let activeTab = "all";
   let activeCategories: string[] = [];
+  let showModal = false;
+  let company: Company;
+
+  const toggleModal = () => {
+    showModal = !showModal;
+  };
 
   function handleCategoryChange(event: Event): void {
     const category = event.target;
@@ -101,6 +130,7 @@
   });
 </script>
 
+<Modal {company} bind:showModal on:click={toggleModal} />
 <header>
   <img src="/src/assets/logo.svg" alt="logo" />
   <div class="searchContainer">
@@ -116,7 +146,7 @@
 <main>
   <div id="filter-container">
     <h3>Filters</h3>
-    <h4>Product</h4>
+    <h4>Categorie</h4>
     <label
       ><input
         type="checkbox"
@@ -257,18 +287,10 @@
     ><br />
     <h4>Licentiestatus</h4>
     <label
-      ><input
-        type="checkbox"
-        name="filter11"
-        value="filter11"
-      />gecertificeerd</label
+      ><input type="checkbox" name="filter11" value="filter11" /> geldig</label
     ><br />
     <label
-      ><input
-        type="checkbox"
-        name="filter12"
-        value="filter12"
-      />geschorst</label
+      ><input type="checkbox" name="filter12" value="filter12" /> ongeldig</label
     ><br />
   </div>
 
@@ -311,7 +333,7 @@
     <div class="certificate-list">
       {#if certificates && certificates.length > 0}
         {#each certificates as certificate}
-          <CertificateItem {certificate} />
+          <CertificateItem {certificate} bind:showModal bind:company />
         {/each}
       {:else}
         <p>No certificates found.</p>

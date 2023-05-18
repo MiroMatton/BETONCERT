@@ -31,6 +31,7 @@ func server(client *mongo.Client, ctx context.Context) {
 	r.HandleFunc("/api/favourite/{id:[0-9]+}", func(w http.ResponseWriter, r *http.Request) {
 		toggleFavouriteHandler(w, r, client)
 	}).Methods("PUT")
+	r.HandleFunc("/api/company/{id:[0-9]+}", companyHandler(client, ctx)).Methods("GET")
 
 	log.Fatal(http.ListenAndServe(":8080", corsMiddleware(r)))
 }
@@ -154,5 +155,24 @@ func toggleFavouriteHandler(w http.ResponseWriter, r *http.Request, client *mong
 	}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+}
+
+func companyHandler(client *mongo.Client, ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id, err := strconv.Atoi(vars["id"])
+		if err != nil {
+			http.Error(w, "Invalid ID", http.StatusBadRequest)
+			return
+		}
+
+		company, err := getCompanyByID(client, ctx, id)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		json.NewEncoder(w).Encode(company)
 	}
 }
