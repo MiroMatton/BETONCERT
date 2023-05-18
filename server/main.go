@@ -16,7 +16,6 @@ func main() {
 
 	config := GetConfig()
 	uri := fmt.Sprintf("mongodb+srv://%s:%s@alpha.mb8vfo3.mongodb.net/?retryWrites=true&w=majority", config.User, config.Password)
-	//fmt.Println(uri)
 
 	// connectie test
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
@@ -97,24 +96,34 @@ func processProductionEntities(client *mongo.Client, ctx context.Context) {
 	}
 }
 
-func getCertificates(client *mongo.Client, ctx context.Context, page int, perPage int, query string, favouriteIDs []int, mode string) ([]Certificate, int, error) {
+func getCertificates(client *mongo.Client, ctx context.Context, page int, perPage int, query string, favouriteIDs []int, mode string, activeCategories []int) ([]Certificate, int, error) {
 	// Access the "certificates" collection from the database
 	certCollection := client.Database("demo").Collection("certificates")
 
 	// Calculate the number of documents to skip based on the page number
 	skip := (page - 1) * perPage
 
-	// Set up the options for the MongoDB query and filter by product if a query is provided
+	// Set up the options for the MongoDB query
 	opts := options.Find().SetSkip(int64(skip)).SetLimit(int64(perPage))
+
+	// Declare variables for the filter and totalCount
 	var filter bson.M
+	var totalCount int64
+
+	// Combine the search criteria depending on whether there are active categories or a search query
 	if len(query) > 0 {
-		filter = bson.M{"product": primitive.Regex{Pattern: query, Options: "i"}}
+		if len(activeCategories) > 0 {
+			filter = bson.M{"product": primitive.Regex{Pattern: query, Options: "i"}, "sectorid": bson.M{"$in": activeCategories}}
+		} else {
+			filter = bson.M{"product": primitive.Regex{Pattern: query, Options: "i"}}
+		}
+	} else if len(activeCategories) > 0 {
+		filter = bson.M{"sectorid": bson.M{"$in": activeCategories}}
 	}
 
 	// Find certificates based on the mode
 	var cursor *mongo.Cursor
 	var err error
-	var totalCount int64 // declare totalCount outside the switch statement
 	switch mode {
 	case "favorites":
 		// Find all certificates with IDs in the "favourites" array
@@ -127,12 +136,12 @@ func getCertificates(client *mongo.Client, ctx context.Context, page int, perPag
 			return nil, 0, err
 		}
 	case "all":
-		// Find all certificates that match the query
+		// Find all certificates that match the filter
 		cursor, err = certCollection.Find(ctx, filter, opts)
 		if err != nil {
 			return nil, 0, err
 		}
-		totalCount, err = certCollection.CountDocuments(ctx, filter) // update the existing totalCount variable
+		totalCount, err = certCollection.CountDocuments(ctx, filter)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -159,6 +168,27 @@ func getCertificates(client *mongo.Client, ctx context.Context, page int, perPag
 
 	// Calculate total number of pages based on the total count and documents per page
 	totalPages := int(math.Ceil(float64(totalCount) / float64(perPage)))
-	fmt.Println(totalPages)
 	return certs, totalPages, nil
+}
+
+func getUserFavorites(client *mongo.Client, ctx context.Context, id string) ([]int, error) {
+	collection := client.Database("demo").Collection("users")
+
+	objectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.M{"_id": objectId}
+
+	var result struct {
+		FavoriteCertificates []int `bson:"favoriteCertificates"`
+	}
+
+	err = collection.FindOne(ctx, filter).Decode(&result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result.FavoriteCertificates, nil
 }

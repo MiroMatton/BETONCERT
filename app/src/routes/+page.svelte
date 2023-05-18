@@ -26,13 +26,30 @@
   let searchQuery = "";
   let totalPages: number;
   let activeTab = "all";
+  let activeCategories: string[] = [];
 
-  async function fetchData() {
+  function handleCategoryChange(event: Event): void {
+    const category = event.target;
+    if (category instanceof HTMLInputElement && category.checked) {
+      activeCategories.push(category.value);
+    } else if (category instanceof HTMLElement) {
+      const index = activeCategories.indexOf(category.getAttribute("value")!);
+      activeCategories.splice(index, 1);
+    }
+    currentPage = 1;
+    fetchData();
+  }
+
+  async function fetchData(): Promise<void> {
     const url = new URL(`http://localhost:8080/api/certificates`);
 
     url.searchParams.set("mode", String(activeTab));
     url.searchParams.set("page", String(currentPage));
     url.searchParams.set("perPage", String(perPage));
+
+    if (activeCategories.length > 0) {
+      url.searchParams.set("products", activeCategories.join(","));
+    }
 
     if (searchQuery.trim()) {
       url.searchParams.set("q", searchQuery);
@@ -101,35 +118,142 @@
     <h3>Filters</h3>
     <h4>Product</h4>
     <label
-      ><input type="checkbox" name="filter1" value="filter1" />Filter 1</label
+      ><input
+        type="checkbox"
+        class="category"
+        name="mortar"
+        value="1"
+        on:change={handleCategoryChange}
+      /> Mortar</label
     ><br />
     <label
-      ><input type="checkbox" name="filter2" value="filter2" />Filter 2</label
+      ><input
+        type="checkbox"
+        class="category"
+        name="concrete"
+        value="2"
+        on:change={handleCategoryChange}
+      /> Concrete</label
     ><br />
     <label
-      ><input type="checkbox" name="filter3" value="filter3" />Filter 3</label
+      ><input
+        type="checkbox"
+        class="category"
+        name="fly-ash"
+        value="23"
+        on:change={handleCategoryChange}
+      /> Fly Ash</label
     ><br />
     <label
-      ><input type="checkbox" name="filter4" value="filter4" />Filter 4</label
+      ><input
+        type="checkbox"
+        class="category"
+        name="aggregates"
+        value="4"
+        on:change={handleCategoryChange}
+      /> Aggregates</label
     ><br />
     <label
-      ><input type="checkbox" name="filter5" value="filter5" />Filter 5</label
-    ><br />
-    <h4>Toepassing</h4>
-    <label
-      ><input type="checkbox" name="filter6" value="filter6" />Filter 6</label
-    ><br />
-    <label
-      ><input type="checkbox" name="filter7" value="filter7" />Filter 7</label
-    ><br />
-    <label
-      ><input type="checkbox" name="filter8" value="filter8" />Filter 8</label
+      ><input
+        type="checkbox"
+        class="category"
+        name="rental-company"
+        value="20"
+        on:change={handleCategoryChange}
+      /> Rental Company</label
     ><br />
     <label
-      ><input type="checkbox" name="filter9" value="filter9" />Filter 9</label
+      ><input
+        type="checkbox"
+        class="category"
+        name="road-concrete"
+        value="19"
+        on:change={handleCategoryChange}
+      /> Road Concrete</label
     ><br />
     <label
-      ><input type="checkbox" name="filter10" value="filter10" />Filter 10</label
+      ><input
+        type="checkbox"
+        class="category"
+        name="hydraulic-road-binders"
+        value="18"
+        on:change={handleCategoryChange}
+      /> Hydraulic Road Binders</label
+    ><br />
+    <label
+      ><input
+        type="checkbox"
+        class="category"
+        name="hydraulically-bound-mixtures"
+        value="17"
+        on:change={handleCategoryChange}
+      /> Hydraulically Bound Mixtures</label
+    ><br />
+    <label
+      ><input type="checkbox" class="category" name="ggbs" value="ggbs" /> GGBS</label
+    ><br />
+    <label
+      ><input
+        type="checkbox"
+        class="category"
+        name="approved-blast-furnace-slag"
+        value="15"
+        on:change={handleCategoryChange}
+      /> Approved Blast Furnace Slag</label
+    ><br />
+    <label
+      ><input
+        type="checkbox"
+        class="category"
+        name="cement-distribution"
+        value="14"
+        on:change={handleCategoryChange}
+      /> Cement Distribution</label
+    ><br />
+    <label
+      ><input
+        type="checkbox"
+        class="category"
+        name="cement"
+        value="13"
+        on:change={handleCategoryChange}
+      /> Cement</label
+    ><br />
+    <label
+      ><input
+        type="checkbox"
+        class="category"
+        name="pigments"
+        value="12"
+        on:change={handleCategoryChange}
+      /> Pigments</label
+    ><br />
+    <label
+      ><input
+        type="checkbox"
+        class="category"
+        name="lime"
+        value="11"
+        on:change={handleCategoryChange}
+      /> Lime</label
+    ><br />
+    <label
+      ><input
+        type="checkbox"
+        class="category"
+        name="admixtures"
+        value="10"
+        on:change={handleCategoryChange}
+      /> Admixtures</label
+    ><br />
+    <label
+      ><input
+        type="checkbox"
+        class="category"
+        name="fly-ash-distribution"
+        value="3"
+        on:change={handleCategoryChange}
+      /> Fly Ash Distribution</label
     ><br />
     <h4>Licentiestatus</h4>
     <label

@@ -66,13 +66,28 @@ func certificatesHandler(client *mongo.Client, ctx context.Context) func(http.Re
 		// Get user favorites from MongoDB
 		favourites, _ := getUserFavorites(client, ctx, "645ff9c78f9b2d306a6d52ff")
 
+		// Get active categories from URI query string as a slice of ints
+		activeCategoriesStr := r.URL.Query().Get("products")
+		var activeCategories []int
+		if activeCategoriesStr != "" {
+			activeCategoriesStrArr := strings.Split(activeCategoriesStr, ",")
+			for _, s := range activeCategoriesStrArr {
+				i, err := strconv.Atoi(s)
+				if err != nil {
+					http.Error(w, "Invalid product ID", http.StatusBadRequest)
+					return
+				}
+				activeCategories = append(activeCategories, i)
+			}
+		}
+
 		var results []Certificate
 		var totalPages int
 		var err error
 
 		// Check the value of the mode parameter and retrieve data accordingly
 		var mode string = r.URL.Query().Get("mode")
-		results, totalPages, err = getCertificates(client, ctx, page, perPage, query, favourites, mode)
+		results, totalPages, err = getCertificates(client, ctx, page, perPage, query, favourites, mode, activeCategories)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -140,26 +155,4 @@ func toggleFavouriteHandler(w http.ResponseWriter, r *http.Request, client *mong
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-}
-
-func getUserFavorites(client *mongo.Client, ctx context.Context, id string) ([]int, error) {
-	collection := client.Database("demo").Collection("users")
-
-	objectId, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, err
-	}
-
-	filter := bson.M{"_id": objectId}
-
-	var result struct {
-		FavoriteCertificates []int `bson:"favoriteCertificates"`
-	}
-
-	err = collection.FindOne(ctx, filter).Decode(&result)
-	if err != nil {
-		return nil, err
-	}
-
-	return result.FavoriteCertificates, nil
 }
