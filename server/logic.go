@@ -3,11 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
-	"math"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -62,55 +59,6 @@ func updateCertificatesCluster(client *mongo.Client, ctx context.Context) {
 			updateCertificates(client, ctx, certificateCompany.Certificate)
 		}
 	}
-}
-
-func getCertificates(client *mongo.Client, ctx context.Context, page int, favouriteIDs []int, query string) ([]Certificate, int, error) {
-	// Access the "certificates" collection from the database
-	certCollection := client.Database("demo").Collection("certificates")
-
-	// Calculate the number of documents to skip based on the page number
-	perPage := 25
-	skip := (page - 1) * perPage
-
-	// Set up the options for the MongoDB query and filter by product if a query is provided
-	opts := options.Find().SetSkip(int64(skip)).SetLimit(int64(perPage))
-	var filter bson.M
-	if len(query) > 0 {
-		filter = bson.M{"product": primitive.Regex{Pattern: query, Options: "i"}}
-	}
-
-	// Execute the query and retrieve the result set
-	cursor, err := certCollection.Find(ctx, filter, opts)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Convert the result set to a slice of Certificate
-	var certs []Certificate
-	if err = cursor.All(ctx, &certs); err != nil {
-		return nil, 0, err
-	}
-
-	// Check if each certificate is in the favourite list and set the isFavourite field
-	for i, cert := range certs {
-		for _, favID := range favouriteIDs {
-			if cert.ID == favID {
-				certs[i].IsFavourite = true
-				break
-			}
-		}
-	}
-
-	// Calculate the total count of documents matching the query
-	totalCount, err := certCollection.CountDocuments(ctx, filter)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Calculate total number of pages based on the total count and documents per page
-	totalPages := int(math.Ceil(float64(totalCount) / float64(perPage)))
-
-	return certs, totalPages, nil
 }
 
 func updateCertificates(client *mongo.Client, ctx context.Context, certificates []Certificate) {
