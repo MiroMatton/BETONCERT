@@ -33,69 +33,6 @@ func main() {
 	server(client, ctx)
 }
 
-func company(client *mongo.Client, ctx context.Context) {
-	url := "https://extranet.be-cert.be/api/HomePage/GetCertificateHoldersTree?languageIsoCode=en&treeFilters=%7B%22certificationType%22%3A%22*%22%7D"
-	data := api(url)
-
-	productsCollection := client.Database("demo").Collection("companiesTest")
-
-	var err error // declare an err variable of type error
-
-	for _, category := range data {
-		for _, company := range category.Company {
-			company.CategoryId = category.Id
-
-			fmt.Println("Company:", company.Name, "was added")
-			_, err = productsCollection.InsertOne(ctx, company)
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
-}
-
-func processProductionEntities(client *mongo.Client, ctx context.Context) {
-	// Get the companies collection from the "demo" database
-	companiesCollection := client.Database("demo").Collection("companiesTest")
-
-	// Get the certificates collection from the "demo" database
-	certificatesCollection := client.Database("demo").Collection("certificates")
-
-	// Find all documents in the collection
-	cursor, err := companiesCollection.Find(ctx, bson.M{})
-	if err != nil {
-		panic(err)
-	}
-	defer cursor.Close(ctx)
-
-	// Decode the documents into an array of Company structs
-	var companies []Company
-	if err = cursor.All(ctx, &companies); err != nil {
-		panic(err)
-	}
-
-	for _, company := range companies {
-
-		data := certApi(company.Id, company.CategoryId)
-
-		if data == nil || len(data) == 0 {
-			continue
-		}
-
-		for _, certificateCompany := range data {
-			for _, certificate := range certificateCompany.Certificate {
-				certificate.CompanyId = certificateCompany.Id
-
-				fmt.Println("Certificate:", company.Name, "was added")
-				_, err = certificatesCollection.InsertOne(ctx, certificate)
-				if err != nil {
-					panic(err)
-				}
-			}
-		}
-	}
-}
-
 func getCertificates(client *mongo.Client, ctx context.Context, page int, perPage int, query string, favouriteIDs []int, mode string, activeCategories []int) ([]Certificate, int, error) {
 	// Access the "certificates" collection from the database
 	certCollection := client.Database("demo").Collection("certificates")
