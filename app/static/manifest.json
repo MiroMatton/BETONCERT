@@ -1,0 +1,17 @@
+{
+  "name": "Betoncert",
+  "short_name": "Betoncert",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "betonCert_app_icon.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "background_color": "#ffffff",
+  "theme_color": "#018cc7",
+  "display": "standalone",
+  "scope": "/",
+  "description": "applicatie voor het controlleren van benor stortklaar beton certificaten"
+}

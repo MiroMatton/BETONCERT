@@ -18,7 +18,7 @@ import (
 
 func corsMiddleware(next http.Handler) http.Handler {
 	headersOk := handlers.AllowedHeaders([]string{"Accept", "Content-Type", "Content-Length", "Accept-Encoding", "Authorization", "X-CSRF-Token", "X-Requested-With"})
-	originsOk := handlers.AllowedOrigins([]string{"http://localhost:5173"})
+	originsOk := handlers.AllowedOrigins([]string{"*"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 
 	return handlers.CORS(headersOk, originsOk, methodsOk)(next)
