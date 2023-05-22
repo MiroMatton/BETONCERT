@@ -33,7 +33,7 @@ func main() {
 	server(client, ctx)
 }
 
-func getCertificates(client *mongo.Client, ctx context.Context, page int, perPage int, query string, favouriteIDs []int, mode string, activeCategories []int) ([]Certificate, int, error) {
+func certificatesList(client *mongo.Client, ctx context.Context, page int, perPage int, query string, favouriteIDs []int, mode string, activeCategories []int) ([]Certificate, int, error) {
 	// Access the "certificates" collection from the database
 	certCollection := client.Database("demo").Collection("certificates")
 

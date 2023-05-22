@@ -11,7 +11,7 @@ import (
 
 func company(client *mongo.Client, ctx context.Context) {
 	url := "https://extranet.be-cert.be/api/HomePage/GetCertificateHoldersTree?languageIsoCode=en&treeFilters=%7B%22certificationType%22%3A%22*%22%7D"
-	data := api(url)
+	data := getCompanies(url)
 
 	productsCollection := client.Database("demo").Collection("companiesTest")
 
@@ -49,7 +49,7 @@ func updateCertificatesCluster(client *mongo.Client, ctx context.Context) {
 
 	for _, company := range companies {
 
-		data := certApi(company.Id, company.CategoryId)
+		data := getCertificates(company.Id, company.CategoryId)
 
 		if data == nil || len(data) == 0 {
 			continue
@@ -159,7 +159,7 @@ func seedCertificatesCluster(client *mongo.Client, ctx context.Context) {
 
 	for _, company := range companies {
 
-		data := certApi(company.Id, company.CategoryId)
+		data := getCertificates(company.Id, company.CategoryId)
 
 		if data == nil || len(data) == 0 {
 			continue

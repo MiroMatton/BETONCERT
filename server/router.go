@@ -88,7 +88,7 @@ func certificatesHandler(client *mongo.Client, ctx context.Context) func(http.Re
 
 		// Check the value of the mode parameter and retrieve data accordingly
 		var mode string = r.URL.Query().Get("mode")
-		results, totalPages, err = getCertificates(client, ctx, page, perPage, query, favourites, mode, activeCategories)
+		results, totalPages, err = certificatesList(client, ctx, page, perPage, query, favourites, mode, activeCategories)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

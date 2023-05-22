@@ -37,7 +37,7 @@ type Data struct {
 	Company []Company `json:"Companies"`
 }
 
-func api(url string) []Data {
+func getCompanies(url string) []Data {
 
 	req, _ := http.NewRequest("GET", url, nil)
 
@@ -83,7 +83,7 @@ type Certificate struct {
 	IsFavourite              bool    `json:"IsFavourite"`
 }
 
-func certApi(companyId int, categoryId int) []Entity {
+func getCertificates(companyId int, categoryId int) []Entity {
 
 	defer func() {
 		if r := recover(); r != nil {
