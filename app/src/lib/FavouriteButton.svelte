@@ -1,6 +1,8 @@
 <script lang="ts">
   export let Id: number;
   export let IsFavourite: boolean;
+  import favourite from "/src/assets/favourite.svg";
+  import unFavourite from "/src/assets/unFavourite.svg";
 
   async function toggleFavourite() {
     IsFavourite = !IsFavourite; // toggle the value of IsFavourite
@@ -31,7 +33,7 @@
 </script>
 
 <img
-  src={`src/assets/${IsFavourite ? "favourite" : "unFavourite"}.svg`}
+  src={IsFavourite ? favourite : unFavourite}
   alt="favourite button"
   on:click={toggleFavourite}
   on:keydown={(event) => {
