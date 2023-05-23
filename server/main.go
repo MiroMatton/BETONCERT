@@ -13,7 +13,6 @@ import (
 )
 
 func main() {
-
 	config := GetConfig()
 	uri := fmt.Sprintf("mongodb+srv://%s:%s@alpha.mb8vfo3.mongodb.net/?retryWrites=true&w=majority", config.User, config.Password)
 

@@ -21,7 +21,7 @@ const urlB64ToUint8Array = (base64String) => {
 };
 
 const saveSubscription = async (subscription) => {
-  const SERVER_URL = "http://localhost:6001/save-subscription";
+  const SERVER_URL = "http://localhost:8080/save-subscription";
   const response = await fetch(SERVER_URL, {
     method: "post",
     headers: {
@@ -35,7 +35,7 @@ const saveSubscription = async (subscription) => {
 worker.addEventListener("install", async () => {
   try {
     const applicationServerKey = urlB64ToUint8Array(
-      "BJ5IxJBWdeqFDJTvrZ4wNRu7UY2XigDXjgiUBYEYVXDudxhEs0ReOJRBcBHsPYgZ5dyV8VjyqzbQKS8V7bUAglk"
+      "BEskS8FtAmwXh88AOPD6T7JXYAyg_1ryvrflshNFOK9BAlqqm85OQ4xXA3FXnCGUOZ14glB0xZk1i6TThmJVVKE"
     );
     const options = { applicationServerKey, userVisibleOnly: true };
     const subscription = await worker.registration.pushManager.subscribe(
@@ -48,23 +48,34 @@ worker.addEventListener("install", async () => {
   }
 });
 
-worker.addEventListener("push", function (event) {
-  if (event.data) {
-    console.log("Push event!! ", event.data.text());
-  } else {
-    console.log("Push event but no data");
+self.addEventListener("activate", async () => {
+  // This will be called only once when the service worker is activated.
+  try {
+    const applicationServerKey = urlB64ToUint8Array(
+      "BEskS8FtAmwXh88AOPD6T7JXYAyg_1ryvrflshNFOK9BAlqqm85OQ4xXA3FXnCGUOZ14glB0xZk1i6TThmJVVKE"
+    );
+    const options = { applicationServerKey, userVisibleOnly: true };
+    const subscription = await worker.registration.pushManager.subscribe(
+      options
+    );
+    console.log("subscribtion succes");
+    await saveSubscription(subscription);
+    console.log("golang succes");
+  } catch (err) {
+    console.log("Error", err);
   }
 });
 
-worker.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then(async (keys) => {
-      for (const key of keys) {
-        if (key !== CACHE_NAME) await caches.delete(key);
-      }
-      worker.clients.claim();
-    })
-  );
+self.addEventListener("push", (event) => {
+  console.log("[Service Worker] Push Received.");
+  console.log(`[Service Worker] Push had this data: "${event.data.text()}"`);
+
+  const title = "Test Webpush";
+  const options = {
+    body: event.data.text(),
+  };
+
+  event.waitUntil(worker.registration.showNotification(title, options));
 });
 
 async function fetchAndCache(request) {

@@ -5,8 +5,9 @@ import (
 )
 
 type Configuration struct {
-	User     string
-	Password string
+	User       string
+	Password   string
+	PrivateKey string
 }
 
 func GetConfig() Configuration {

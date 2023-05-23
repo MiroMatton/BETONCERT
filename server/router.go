@@ -33,6 +33,9 @@ func server(client *mongo.Client, ctx context.Context) {
 	}).Methods("PUT")
 	r.HandleFunc("/api/company/{id:[0-9]+}", companyHandler(client, ctx)).Methods("GET")
 
+	r.HandleFunc("/save-subscription", subscriptionsHandler(client, ctx)).Methods("POST")
+	r.HandleFunc("/sendNotification", sendNotification(client, ctx)).Methods("GET")
+
 	log.Fatal(http.ListenAndServe(":8080", corsMiddleware(r)))
 }
 
@@ -174,5 +177,69 @@ func companyHandler(client *mongo.Client, ctx context.Context) http.HandlerFunc 
 		}
 
 		json.NewEncoder(w).Encode(company)
+	}
+}
+
+func subscriptionsHandler(client *mongo.Client, ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Parse the subscription details from the request body
+		var subscription map[string]interface{}
+		if err := json.NewDecoder(r.Body).Decode(&subscription); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		// Extract the notification key details from the subscription
+		notificationKey := subscription
+
+		// Save the subscription details to the user in the database
+		userCollection := client.Database("demo").Collection("users")
+		objectID, err := primitive.ObjectIDFromHex("645ff9c78f9b2d306a6d52ff")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		filter := bson.M{"_id": objectID}
+		update := bson.M{"$set": bson.M{"notificationKey": notificationKey}}
+		_, err = userCollection.UpdateOne(ctx, filter, update)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Respond with a success message
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "Subscription saved successfully",
+		}); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+func sendNotification(client *mongo.Client, ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userCollection := client.Database("demo").Collection("users")
+		objectID, err := primitive.ObjectIDFromHex("645ff9c78f9b2d306a6d52ff")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		filter := bson.M{"_id": objectID}
+		var user map[string]interface{}
+		if err := userCollection.FindOne(ctx, filter).Decode(&user); err != nil {
+			if err == mongo.ErrNoDocuments {
+				http.Error(w, "User not found", http.StatusNotFound)
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			return
+		}
+
+		push(user)
+
+		w.WriteHeader(http.StatusOK)
 	}
 }
