@@ -34,7 +34,7 @@ func main() {
 
 func certificatesList(client *mongo.Client, ctx context.Context, page int, perPage int, query string, favouriteIDs []int, mode string, activeCategories []int) ([]Certificate, int, error) {
 	// Access the "certificates" collection from the database
-	certCollection := client.Database("demo").Collection("certificates")
+	certCollection := client.Database("betonCert").Collection("certificates")
 
 	// Calculate the number of documents to skip based on the page number
 	skip := (page - 1) * perPage
@@ -108,7 +108,7 @@ func certificatesList(client *mongo.Client, ctx context.Context, page int, perPa
 }
 
 func getUserFavorites(client *mongo.Client, ctx context.Context, id string) ([]int, error) {
-	collection := client.Database("demo").Collection("users")
+	collection := client.Database("betonCert").Collection("users")
 
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -130,7 +130,7 @@ func getUserFavorites(client *mongo.Client, ctx context.Context, id string) ([]i
 }
 
 func getCompanyByID(client *mongo.Client, ctx context.Context, id int) (*Company, error) {
-	collection := client.Database("demo").Collection("companiesTest")
+	collection := client.Database("betonCert").Collection("companies")
 
 	filter := bson.M{"productionentities.id": id}
 

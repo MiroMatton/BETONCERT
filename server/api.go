@@ -15,7 +15,6 @@ type Company struct {
 	Address            string             `json:"Address"`
 	Zip                string             `json:"Zip"`
 	City               string             `json:"City"`
-	CountryId          int                `json:"CountryId"`
 	Tel                string             `json:"Tel"`
 	VAT                string             `json:"VAT"`
 	CategoryId         int                `json:"categoryId"`
@@ -31,14 +30,14 @@ type ProductionEntity struct {
 	Tel     string `json:"Tel"`
 }
 
-type Data struct {
+type Categorie struct {
 	Id      int       `json:"Id"`
 	Name    string    `json:"Name"`
 	Company []Company `json:"Companies"`
 }
 
-func getCompanies(url string) []Data {
-
+func getCompanies() []Categorie {
+	url := "https://extranet.be-cert.be/api/HomePage/GetCertificateHoldersTree?languageIsoCode=en&treeFilters=%7B%22certificationType%22%3A%22*%22%7D"
 	req, _ := http.NewRequest("GET", url, nil)
 
 	res, err := http.DefaultClient.Do(req)
@@ -49,14 +48,14 @@ func getCompanies(url string) []Data {
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)
 
-	var data []Data
+	var categorie []Categorie
 
-	e := json.Unmarshal(body, &data)
+	e := json.Unmarshal(body, &categorie)
 	if e != nil {
 		panic(err)
 	}
 
-	return data
+	return categorie
 }
 
 type Entity struct {

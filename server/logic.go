@@ -2,37 +2,19 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	gomail "gopkg.in/mail.v2"
 )
-
-func company(client *mongo.Client, ctx context.Context) {
-	url := "https://extranet.be-cert.be/api/HomePage/GetCertificateHoldersTree?languageIsoCode=en&treeFilters=%7B%22certificationType%22%3A%22*%22%7D"
-	data := getCompanies(url)
-
-	productsCollection := client.Database("demo").Collection("companiesTest")
-
-	var err error // declare an err variable of type error
-
-	for _, category := range data {
-		for _, company := range category.Company {
-			company.CategoryId = category.Id
-
-			fmt.Println("Company:", company.Name, "was added")
-			_, err = productsCollection.InsertOne(ctx, company)
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
-}
 
 func updateCertificatesCluster(client *mongo.Client, ctx context.Context) {
 	// Get the companies collection from the "demo" database
-	companiesCollection := client.Database("demo").Collection("companiesTest")
+	companiesCollection := client.Database("betonCert").Collection("companiesTest")
 
 	// Find all documents in the collection
 	cursor, err := companiesCollection.Find(ctx, bson.M{})
@@ -63,7 +45,7 @@ func updateCertificatesCluster(client *mongo.Client, ctx context.Context) {
 
 func updateCertificates(client *mongo.Client, ctx context.Context, certificates []Certificate) {
 	// Get the certificates collection from the "demo" database
-	certificatesCollection := client.Database("demo").Collection("certificates")
+	certificatesCollection := client.Database("betonCert").Collection("certificates")
 	for _, certificate := range certificates {
 		// Find the existing certificate with the same ID
 		filter := bson.M{"id": certificate.ID}
@@ -135,14 +117,43 @@ func contains(array []int, id int) bool {
 
 func notifyUser(certificate Certificate) {
 	fmt.Println("notify Thiery that the certficate: %s has been updated to valid %s", certificate.Product, certificate.NotLicensed)
+	m := gomail.NewMessage()
+
+	// Set E-Mail sender
+	m.SetHeader("From", "miromatton@gmail.com")
+
+	// Set E-Mail receivers
+	m.SetHeader("To", "to@example.com")
+
+	// Set E-Mail subject
+	m.SetHeader("Subject", "Gomail test subject")
+
+	// Set E-Mail body. You can set plain text or html with text/html
+	m.SetBody("text/plain", "This is Gomail test body")
+
+	// Settings for SMTP server
+	d := gomail.NewDialer("smtp.gmail.com", 587, "from@gmail.com", "<email_password>")
+
+	// This is only needed when SSL/TLS certificate is not valid on server.
+	// In production this should be set to false.
+	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+
+	// Now send E-Mail
+	if err := d.DialAndSend(m); err != nil {
+		fmt.Println(err)
+		panic(err)
+	}
+
+	return
+
 }
 
-func seedCertificatesCluster(client *mongo.Client, ctx context.Context) {
+func certficatesSeeder(client *mongo.Client, ctx context.Context) {
 	// Get the companies collection from the "demo" database
-	companiesCollection := client.Database("demo").Collection("companiesTest")
+	companiesCollection := client.Database("betonCert").Collection("companies")
 
 	// Get the certificates collection from the "demo" database
-	certificatesCollection := client.Database("demo").Collection("certificates")
+	certificatesCollection := client.Database("betonCert").Collection("certificates")
 
 	// Find all documents in the collection
 	cursor, err := companiesCollection.Find(ctx, bson.M{})
@@ -151,30 +162,65 @@ func seedCertificatesCluster(client *mongo.Client, ctx context.Context) {
 	}
 	defer cursor.Close(ctx)
 
-	// Decode the documents into an array of Company structs
-	var companies []Company
-	if err = cursor.All(ctx, &companies); err != nil {
-		panic(err)
-	}
+	// Use a channel to synchronize the Goroutines
+	ch := make(chan Certificate)
 
-	for _, company := range companies {
-
-		data := getCertificates(company.Id, company.CategoryId)
-
-		if data == nil || len(data) == 0 {
-			continue
+	for cursor.Next(ctx) {
+		var company Company
+		if err := cursor.Decode(&company); err != nil {
+			fmt.Println(err)
 		}
 
-		for _, certificateCompany := range data {
-			for _, certificate := range certificateCompany.Certificate {
-				certificate.CompanyId = certificateCompany.Id
+		go func(company Company) {
+			data := getCertificates(company.Id, company.CategoryId)
+			if data == nil || len(data) == 0 {
+				return
+			}
 
-				fmt.Println("Certificate:", company.Name, "was added")
-				_, err = certificatesCollection.InsertOne(ctx, certificate)
-				if err != nil {
-					panic(err)
+			for _, certificateCompany := range data {
+				for _, certificate := range certificateCompany.Certificate {
+					certificate.CompanyId = certificateCompany.Id
+
+					fmt.Println("Certificate:", company.Name, "was added")
+					if _, err = certificatesCollection.InsertOne(ctx, certificate); err != nil {
+						fmt.Println(err)
+					}
+
+					// Send the certificate to the channel
+					ch <- certificate
 				}
 			}
+		}(company)
+	}
+
+	// Wait for all certificates to be inserted
+	for range ch {
+	}
+}
+
+func companySeeder(client *mongo.Client, ctx context.Context) {
+	categories := getCompanies()
+
+	companiesCollection := client.Database("betonCert").Collection("companies")
+
+	ch := make(chan Company)
+
+	for _, category := range categories {
+		for _, company := range category.Company {
+			company.CategoryId = category.Id
+
+			go func(company Company) {
+				fmt.Println("Company:", company.Name, "was added")
+				if _, err := companiesCollection.InsertOne(ctx, company); err != nil {
+					panic(err)
+				}
+
+				// Send the company to the channel
+				ch <- company
+			}(company)
 		}
+	}
+
+	for range ch {
 	}
 }

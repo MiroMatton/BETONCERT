@@ -2,6 +2,11 @@
   import { onMount } from "svelte";
   import CertificateItem from "$lib/CertificateItem.svelte";
   import Modal from "$lib/modal.svelte";
+
+  import arrowLeft from "/src/assets/arrowLeft.svg";
+  import arrowRight from "/src/assets/arrowRight.svg";
+  import search from "/src/assets/search.svg";
+  import logo from "/src/assets/logo.svg";
   interface Certificate {
     _id: string;
     certificateNumber: string;
@@ -52,6 +57,7 @@
   let activeCategories: string[] = [];
   let showModal = false;
   let company: Company;
+  let selectedCertificate: Certificate;
 
   const toggleModal = () => {
     showModal = !showModal;
@@ -152,14 +158,14 @@
   });
 </script>
 
-<Modal {company} bind:showModal on:click={toggleModal} />
+<Modal {company} {selectedCertificate} bind:showModal on:click={toggleModal} />
 <header>
-  <img src="/src/assets/logo.svg" alt="logo" />
+  <img src={logo} alt="logo" />
   <div class="searchContainer">
     <form>
       <input type="text" placeholder="> Wat zoek je" bind:value={searchQuery} />
       <button type="submit">
-        <img src="/src/assets/search.svg" alt="search icon" />
+        <img src={search} alt="search icon" />
       </button>
     </form>
   </div>
@@ -339,27 +345,56 @@
         }}>Favorites</span
       >
     </div>
-    <div class="page-navigation">
-      <button
-        disabled={currentPage === 1}
-        on:click={() => goToPage(currentPage - 1)}
-        ><img src="/src/assets/arrowLeft.svg" alt="voorige pagina " />
-      </button>
-      <span>{currentPage}</span>
-      <button
-        disabled={currentPage === totalPages}
-        on:click={() => goToPage(currentPage + 1)}
-        ><img src="/src/assets/arrowRight.svg" alt="volgende pagina" /></button
-      >
-    </div>
     <div class="certificate-list">
       {#if certificates && certificates.length > 0}
         {#each certificates as certificate}
-          <CertificateItem {certificate} bind:showModal bind:company />
+          <CertificateItem
+            {certificate}
+            bind:showModal
+            bind:company
+            bind:selectedCertificate
+          />
         {/each}
       {:else}
         <p>No certificates found.</p>
       {/if}
+    </div>
+    <div class="page-navigation">
+      <button
+        disabled={currentPage === 1}
+        on:click={() => goToPage(currentPage - 1)}
+        ><img src={arrowLeft} alt="voorige pagina " />
+      </button>
+      <div class="pageNavigation">
+        {#if currentPage > 2}
+          <span on:click={() => goToPage(currentPage - 2)}
+            >{currentPage - 2}</span
+          >
+        {/if}
+        {#if currentPage > 1}
+          <span on:click={() => goToPage(currentPage - 1)}
+            >{currentPage - 1}</span
+          >
+        {/if}
+        <span class="currentPage" on:click={() => goToPage(currentPage)}
+          >{currentPage}</span
+        >
+        {#if currentPage < totalPages}
+          <span on:click={() => goToPage(currentPage + 1)}
+            >{currentPage + 1}</span
+          >
+        {/if}
+        {#if currentPage + 1 < totalPages}
+          <span on:click={() => goToPage(currentPage + 2)}
+            >{currentPage + 2}</span
+          >
+        {/if}
+      </div>
+      <button
+        disabled={currentPage === totalPages}
+        on:click={() => goToPage(currentPage + 1)}
+        ><img src={arrowRight} alt="volgende pagina" /></button
+      >
     </div>
   </div>
 </main>

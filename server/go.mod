@@ -2,13 +2,18 @@ module BetonCert
 
 go 1.19
 
-require go.mongodb.org/mongo-driver v1.11.1
+require (
+	github.com/SherClockHolmes/webpush-go v1.2.0
+	github.com/markbates/pkger v0.17.1
+	go.mongodb.org/mongo-driver v1.11.1
+)
 
 require (
-	github.com/SherClockHolmes/webpush-go v1.2.0 // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
+	github.com/gobuffalo/here v0.6.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
@@ -27,4 +32,5 @@ require (
 	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/text v0.9.0 // indirect
+	gopkg.in/mail.v2 v2.3.1
 )

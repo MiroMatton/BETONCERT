@@ -8,8 +8,7 @@ import (
 )
 
 func generateVAPIDKeys() (string, string, error) {
-	publicKey := "BEskS8FtAmwXh88AOPD6T7JXYAyg_1ryvrflshNFOK9BAlqqm85OQ4xXA3FXnCGUOZ14glB0xZk1i6TThmJVVKE"
-	privateKey := "itjiRwW-GfKA3VuB9y2xFdEsRdUKDSa5TT5yP8nKCf0"
+	privateKey, publicKey, _ := webpush.GenerateVAPIDKeys()
 	return publicKey, privateKey, nil
 }
 
@@ -31,12 +30,13 @@ func push(user map[string]interface{}) {
 	json.Unmarshal(subscriptionBytes, s)
 
 	// Send Notification
-	resp, err := webpush.SendNotification([]byte("timgay"), s, &webpush.Options{
-		VAPIDPublicKey:  "BEskS8FtAmwXh88AOPD6T7JXYAyg_1ryvrflshNFOK9BAlqqm85OQ4xXA3FXnCGUOZ14glB0xZk1i6TThmJVVKE",
+	resp, err := webpush.SendNotification([]byte("update certificate"), s, &webpush.Options{
+		VAPIDPublicKey:  "BNOtWzRrDW8bwLSjwgbyvUwm5-aitqw0HJyL7Be-W6o_73Huy-KVqz4qNkBuoSQn71cHs9hBzCM8rj2GhdWL9CU",
 		VAPIDPrivateKey: config.PrivateKey,
 	})
 	if err != nil {
-
+		fmt.Println("Error notification didn't send:", err)
+	} else {
+		defer resp.Body.Close()
 	}
-	defer resp.Body.Close()
 }

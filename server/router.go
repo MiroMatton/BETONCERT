@@ -33,7 +33,7 @@ func server(client *mongo.Client, ctx context.Context) {
 	}).Methods("PUT")
 	r.HandleFunc("/api/company/{id:[0-9]+}", companyHandler(client, ctx)).Methods("GET")
 
-	r.HandleFunc("/save-subscription", subscriptionsHandler(client, ctx)).Methods("POST")
+	r.HandleFunc("/subscription", subscriptionsHandler(client, ctx)).Methods("POST")
 	r.HandleFunc("/sendNotification", sendNotification(client, ctx)).Methods("GET")
 
 	log.Fatal(http.ListenAndServe(":8080", corsMiddleware(r)))
@@ -68,7 +68,7 @@ func certificatesHandler(client *mongo.Client, ctx context.Context) func(http.Re
 		}
 
 		// Get user favorites from MongoDB
-		favourites, _ := getUserFavorites(client, ctx, "645ff9c78f9b2d306a6d52ff")
+		favourites, _ := getUserFavorites(client, ctx, "646f1bb8e6d409967e1a849c")
 
 		// Get active categories from URI query string as a slice of ints
 		activeCategoriesStr := r.URL.Query().Get("products")
@@ -132,19 +132,21 @@ func toggleFavouriteHandler(w http.ResponseWriter, r *http.Request, client *mong
 	}
 
 	// Update favorite status for user in MongoDB
-	userCollection := client.Database("demo").Collection("users")
-	objectID, err := primitive.ObjectIDFromHex("645ff9c78f9b2d306a6d52ff")
+	userCollection := client.Database("betonCert").Collection("users")
+	objectID, err := primitive.ObjectIDFromHex("646f1bb8e6d409967e1a849c")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	filter := bson.M{"_id": objectID}
-	update := bson.M{}
-	if reqBody.IsFavourite {
-		update = bson.M{"$addToSet": bson.M{"favoriteCertificates": id}}
-	} else {
-		update = bson.M{"$pull": bson.M{"favoriteCertificates": id}}
+	update := bson.M{
+		"$addToSet": bson.M{"favoriteCertificates": id},
+	}
+	if !reqBody.IsFavourite {
+		update = bson.M{
+			"$pull": bson.M{"favoriteCertificates": id},
+		}
 	}
 	_, err = userCollection.UpdateOne(context.TODO(), filter, update)
 	if err != nil {
@@ -193,8 +195,8 @@ func subscriptionsHandler(client *mongo.Client, ctx context.Context) http.Handle
 		notificationKey := subscription
 
 		// Save the subscription details to the user in the database
-		userCollection := client.Database("demo").Collection("users")
-		objectID, err := primitive.ObjectIDFromHex("645ff9c78f9b2d306a6d52ff")
+		userCollection := client.Database("betonCert").Collection("users")
+		objectID, err := primitive.ObjectIDFromHex("646f1bb8e6d409967e1a849c")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -221,8 +223,8 @@ func subscriptionsHandler(client *mongo.Client, ctx context.Context) http.Handle
 
 func sendNotification(client *mongo.Client, ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userCollection := client.Database("demo").Collection("users")
-		objectID, err := primitive.ObjectIDFromHex("645ff9c78f9b2d306a6d52ff")
+		userCollection := client.Database("betonCert").Collection("users")
+		objectID, err := primitive.ObjectIDFromHex("646f1bb8e6d409967e1a849c")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

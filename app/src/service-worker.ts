@@ -32,27 +32,10 @@ const saveSubscription = async (subscription) => {
   return response.json();
 };
 
-worker.addEventListener("install", async () => {
-  try {
-    const applicationServerKey = urlB64ToUint8Array(
-      "BEskS8FtAmwXh88AOPD6T7JXYAyg_1ryvrflshNFOK9BAlqqm85OQ4xXA3FXnCGUOZ14glB0xZk1i6TThmJVVKE"
-    );
-    const options = { applicationServerKey, userVisibleOnly: true };
-    const subscription = await worker.registration.pushManager.subscribe(
-      options
-    );
-    const response = await saveSubscription(subscription);
-    console.log(response);
-  } catch (err) {
-    console.log("Error", err);
-  }
-});
-
 self.addEventListener("activate", async () => {
-  // This will be called only once when the service worker is activated.
   try {
     const applicationServerKey = urlB64ToUint8Array(
-      "BEskS8FtAmwXh88AOPD6T7JXYAyg_1ryvrflshNFOK9BAlqqm85OQ4xXA3FXnCGUOZ14glB0xZk1i6TThmJVVKE"
+      "BNOtWzRrDW8bwLSjwgbyvUwm5-aitqw0HJyL7Be-W6o_73Huy-KVqz4qNkBuoSQn71cHs9hBzCM8rj2GhdWL9CU"
     );
     const options = { applicationServerKey, userVisibleOnly: true };
     const subscription = await worker.registration.pushManager.subscribe(
@@ -70,9 +53,9 @@ self.addEventListener("push", (event) => {
   console.log("[Service Worker] Push Received.");
   console.log(`[Service Worker] Push had this data: "${event.data.text()}"`);
 
-  const title = "Test Webpush";
+  const title = "Update ✨";
   const options = {
-    body: event.data.text(),
+    body: "een van uw certificaten is bijgewerkt",
   };
 
   event.waitUntil(worker.registration.showNotification(title, options));
