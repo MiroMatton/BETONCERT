@@ -2,48 +2,114 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"runtime"
 )
 
-type Companies struct {
-	Id        int    `json:"Id"`
-	Name      string `json:"Name"`
-	Address   string `json:"Address"`
-	Zip       string `json:"Zip"`
-	City      string `json:"City"`
-	CountryId int    `json:"CountryId"`
-	Tel       string `json:"Tel"`
-	VAT       string `json:"VAT"`
+type Company struct {
+	Id                 int                `json:"Id"`
+	Name               string             `json:"Name"`
+	Address            string             `json:"Address"`
+	Zip                string             `json:"Zip"`
+	City               string             `json:"City"`
+	Tel                string             `json:"Tel"`
+	VAT                string             `json:"VAT"`
+	CategoryId         int                `json:"categoryId"`
+	ProductionEntities []ProductionEntity `json:"ProductionEntities"`
 }
 
-type Product struct {
-	Id        int         `json:"Id"`
-	Name      string      `json:"Name"`
-	Companies []Companies `json:"Companies"`
+type ProductionEntity struct {
+	Id      int    `json:"Id"`
+	Name    string `json:"Name"`
+	Address string `json:"Address"`
+	Zip     string `json:"Zip"`
+	City    string `json:"City"`
+	Tel     string `json:"Tel"`
 }
 
-func api(url string) Product {
+type Categorie struct {
+	Id      int       `json:"Id"`
+	Name    string    `json:"Name"`
+	Company []Company `json:"Companies"`
+}
 
+func getCompanies() []Categorie {
+	url := "https://extranet.be-cert.be/api/HomePage/GetCertificateHoldersTree?languageIsoCode=en&treeFilters=%7B%22certificationType%22%3A%22*%22%7D"
 	req, _ := http.NewRequest("GET", url, nil)
 
-	res, _ := http.DefaultClient.Do(req)
-
-	defer res.Body.Close()
-	body, _ := ioutil.ReadAll(res.Body)
-
-	var product []Product
-
-	err := json.Unmarshal(body, &product)
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		panic(err)
 	}
 
-	// for _, companyData := range product {
-	// 	fmt.Println("company NAME: ", companyData.Name)
-	// 	fmt.Println("company ID: ", companyData.Id)
-	// }
+	defer res.Body.Close()
+	body, _ := ioutil.ReadAll(res.Body)
 
-	return product[0]
+	var categorie []Categorie
 
+	e := json.Unmarshal(body, &categorie)
+	if e != nil {
+		panic(err)
+	}
+
+	return categorie
+}
+
+type Entity struct {
+	Id          int           `json:"Id"`
+	Name        string        `json:"Name"`
+	Certificate []Certificate `json:"Certificates"`
+}
+
+type Certificate struct {
+	ID                       int     `json:"ID"`
+	Product                  string  `json:"Product"`
+	CertificateNumber        string  `json:"CertificateNumber"`
+	Standard                 string  `json:"Standard"`
+	TechnicalSpecification   *string `json:"TechnicalSpecification"`
+	CertificateReport        int     `json:"CertificateReport"`
+	SectorID                 int     `json:"SectorId"`
+	StatusID                 int     `json:"StatusId"`
+	NotLicensed              bool    `json:"NotLicensed"`
+	NotLicensedMessage       *string `json:"NotLicensedMessage"`
+	CertificationStatusID    int     `json:"CertificationStatusId"`
+	CertificationNotLicensed bool    `json:"CertificationNotLicensed"`
+	Suspended                bool    `json:"Suspended"`
+	CompanyId                int     `json:CompanyId`
+	IsFavourite              bool    `json:"IsFavourite"`
+}
+
+func getCertificates(companyId int, categoryId int) []Entity {
+
+	defer func() {
+		if r := recover(); r != nil {
+			buf := make([]byte, 1<<16)
+			runtime.Stack(buf, true)
+			log.Printf("panic: %v\n%s", r, buf)
+		}
+	}()
+
+	url := fmt.Sprintf("https://extranet.be-cert.be/api/HomePage/GetProductsTreeBranchForCompanyAndSector?languageIsoCode=en&treeFilters={%%22companyId%%22:%d,%%22sectorId%%22:%d,%%22certificationType%%22:%%22*%%22}", companyId, categoryId)
+
+	req, _ := http.NewRequest("GET", url, nil)
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		panic(err)
+	}
+
+	defer res.Body.Close()
+	body, _ := ioutil.ReadAll(res.Body)
+
+	var certificate []Entity
+
+	e := json.Unmarshal(body, &certificate)
+	if e != nil {
+		panic(err)
+	}
+
+	return certificate
 }

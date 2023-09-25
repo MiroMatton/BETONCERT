@@ -1,0 +1,223 @@
+@import "./_variables.scss";
+:global(*) {
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+:global(body) {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  background-color: $primary-color;
+  overflow-y: hidden;
+  /* Hide scrollbar buttons and track */
+  ::-webkit-scrollbar-button,
+  ::-webkit-scrollbar-track {
+    display: none;
+  }
+
+  /* Set the width and color of the scrollbar thumb */
+  ::-webkit-scrollbar-thumb {
+    background-color: $light-blue-color;
+    border-radius: 5px;
+  }
+
+  /* Set the background color for the scrollbar area */
+  ::-webkit-scrollbar {
+    width: 10px;
+    background-color: transparent;
+  }
+}
+
+main {
+  display: flex;
+  flex: auto;
+  overflow-y: hidden;
+  margin: 0 auto;
+  background-color: $primary-color;
+  width: 100%;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 1rem;
+  color: $white-color;
+
+  img:first-child {
+    flex: 1 0 10%;
+  }
+
+  .searchContainer {
+    flex: 3 0 70%;
+    margin: 0 5rem;
+    background-color: $light-blue-color;
+    border-radius: 5px;
+
+    form {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    img {
+      padding-left: 1rem;
+    }
+  }
+
+  input[type="text"] {
+    flex: 1;
+    margin: 0.5rem;
+    color: $white-color;
+    border: none;
+    outline: none;
+    background-color: inherit;
+  }
+
+  button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+
+    img[src$="/search.svg"] {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+    }
+  }
+}
+
+#filter-container {
+  width: 300px;
+  background-color: $light-grey-color;
+  padding: 10px;
+  border-radius: 32px 0 0 32px;
+  padding: 0 2rem;
+
+  h3 {
+    font-size: 2rem;
+  }
+}
+
+#certificate-container {
+  flex: 1;
+  padding: 1rem;
+  background-color: $white-color;
+  border-radius: 0 32px 32px 0;
+  height: 90vh;
+  overflow-y: scroll;
+
+  .certificate-list {
+    flex: 1;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px;
+    background-color: $white-color;
+    border-radius: 0 32px 32px 0;
+    div {
+      border-bottom: 1px solid rgba(238, 238, 238, 0.9);
+      margin-bottom: 10px;
+    }
+  }
+
+  .pageNavigation {
+    border-style: none;
+    span {
+      padding: 0 0.5rem;
+      cursor: pointer;
+    }
+
+    .currentPage {
+      color: $black-color;
+      font-weight: 700;
+    }
+  }
+
+  div {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(238, 238, 238, 0.9);
+    margin-bottom: 10px;
+  }
+
+  button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .page-navigation {
+    display: flex;
+    justify-content: space-between;
+    color: $primary-color;
+  }
+}
+
+.tabs {
+  display: flex;
+  padding-bottom: 10px;
+  font-size: 1.5rem;
+  padding: 1rem;
+}
+
+.tab {
+  font-weight: bold;
+  cursor: pointer;
+  margin-right: 1rem;
+  &:hover {
+    color: $primary-color;
+  }
+  &.active {
+    color: $primary-color;
+    text-decoration: underline;
+  }
+}
+
+#toggle-filters {
+  display: none;
+}
+
+@media screen and (max-width: 768px) {
+  :global(main) {
+    flex-direction: column;
+  }
+
+  #filter-container {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-radius: 32px 32px 0 0;
+  }
+
+  #certificate-container {
+    width: 100%;
+    padding-top: 10px;
+    border-radius: 0 0 32px 32px;
+  }
+
+  #toggle-filters {
+    display: block;
+    margin-bottom: 10px;
+    text-align: center;
+    cursor: pointer;
+  }
+
+  #filter-container.collapsed {
+    height: 0;
+    overflow: hidden;
+  }
+
+  #toggle-filters:before {
+    content: "+ Toggle Filters";
+  }
+
+  #filter-container.collapsed #toggle-filters:before {
+    content: "- Toggle Filters";
+  }
+}
